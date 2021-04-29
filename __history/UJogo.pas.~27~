@@ -1,0 +1,72 @@
+unit UJogo;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
+  Vcl.Imaging.pngimage, UJogoOO, Vcl.MPlayer;
+
+type
+  TForm3 = class(TForm)
+    Panel1: TPanel;
+    Label1: TLabel;
+    Label2: TLabel;
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure Label2Click(Sender: TObject);
+    procedure TForm3.atualizarLabel(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form3: TForm3;
+  Jogo : TJogo;
+
+
+implementation
+
+{$R *.dfm}
+
+
+procedure TForm3.FormCreate(Sender: TObject);
+begin
+   DoubleBuffered := true;
+
+end;
+
+procedure TForm3.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+   case key of
+    VK_LEFT  : jogo.setCanhaoEsquerda;
+    VK_RIGHT : jogo.setCanhaoDireita;
+    VK_UP    : jogo.setCanhaoMeio;
+    VK_DOWN  : jogo.setCanhaoMeio;
+    VK_SPACE : jogo.atirar;
+   end;
+
+
+end;
+
+procedure TForm3.atualizarLabel(Sender: TObject);
+begin
+  Label1.Caption := 'Nível ' + IntToStr(jogo.nivel);
+end;
+
+procedure TForm3.FormShow(Sender: TObject);
+var
+  tmover: TTimer;
+begin
+   jogo := tjogo.Create;
+
+   jogo.inicializar(Panel1);
+   TMover := TTimer.Create(jogo.tela);
+   TMover.Interval := 2;
+   TMover.OnTimer  := atualizarLabel;
+   TMover.Enabled  := true;
+end;

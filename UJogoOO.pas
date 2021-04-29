@@ -6,6 +6,11 @@ uses Vcl.ExtCtrls,Vcl.Controls, Vcl.Dialogs,Vcl.MPlayer ;
 
 type
   TJogo = class
+  public
+    nivel       : integer;
+    Tela        : TwinControl;
+    pontuacao   : integer;
+
   private
     { Private declarations }
     TCriador    : TTimer;
@@ -14,12 +19,16 @@ type
 
     bateu       : boolean;
     NumeroNaves : integer;
-    nivel       : integer;
 
-    Tela        : TwinControl;
+
+
 
     Nave        : TImage;
     ImgBatida   : tImage;
+    ImgFundo    : tImage;
+    direcaoCanhao: integer; // 0 - Esquerda, 1 - Meio, 2 - Cima
+    tm          : TMediaPlayer;
+
 
     function    VerificaColisao(O1, O2 : TControl):boolean;
 
@@ -31,10 +40,10 @@ type
 
   public
   { Public declarations }
-    procedure MoveEsquerda;
-    procedure MoveDireita;
-    procedure MoveBaixo;
-    procedure MoveCima;
+    procedure setCanhaoEsquerda;
+    procedure setCanhaoDireita;
+    procedure setCanhaoMeio;
+    procedure atirar;
 
     procedure inicializar(T:TwinControl);
 
@@ -53,16 +62,16 @@ begin
    begin
       t         := timage.Create(tela);
       t.Parent  := tela;
-      t.Picture.LoadFromFile('..\..\asteroide.png');
-      t.Height := 33;
-      t.Width  := 25;
+      t.Picture.LoadFromFile('..\..\nave_inimiga.png');
+      t.Height := 50;
+      t.Width  := 75;
       t.Stretch := true;
       t.Proportional := true;
       t.Visible := true;
-      t.Top     := 40;
+      t.Left     := 0;
 
 
-      t.Left    := Random(tela.Width - 50);
+      t.Top    := Random(tela.Height - 240);
       t.Tag     := 1;
    end;
 end;
@@ -72,15 +81,9 @@ begin
      tm := TMediaPlayer.Create(tela);
      tm.Parent   := tela;
      tm.Visible  := false;
-     tm.FileName := '..\..\Audio.mpeg';
+     tm.FileName := '..\..\tiro.mp3';
      tm.Open;
-     //tm.Open;
      tm.Play;
-
-     ImgBatida.Top     :=  round(nave.Top  + nave.Height / 2) - round(ImgBatida.Height/2);
-     ImgBatida.Left    :=  round(nave.Left + nave.Width  / 2) - round(ImgBatida.Width/2);
-     Nave.Visible := false;
-     ImgBatida.Visible := true;
 end;
 
 procedure TJogo.IncrementaNivel(Sender: TObject);
@@ -114,26 +117,42 @@ begin
    bateu       := false;
    NumeroNaves := 0;
    nivel       := 1;
+   pontuacao   := 0;
 
+   // fundo
+   ImgFundo := timage.Create(tela);
+   ImgFundo.Parent := tela;
+   ImgFundo.Picture.LoadFromFile('..\..\fundo.png');
+   ImgFundo.Height := 400;
+   ImgFundo.Width  := 702;
+   ImgFundo.Stretch := true;
+   ImgFundo.Proportional := true;
+   ImgFundo.Visible := true;
 
-   //heroi
+   //heroi - tiro
    nave := timage.Create(tela);
    nave.Parent := tela;
-   nave.Picture.LoadFromFile('..\..\nave.png');
+   nave.Picture.LoadFromFile('..\..\tiro.png');
    nave.Height := 41;
    nave.Width  := 25;
    nave.Stretch := true;
    nave.Proportional := true;
-   nave.Visible := true;
+   nave.Visible := false;
 
-   nave.Top   := tela.Height - 100;
-   nave.Left  := round(tela.Width/2);
+   nave.Top   := tela.Height;
+   nave.Left  := tela.Width;
 
+   // audio tiro
+   tm := TMediaPlayer.Create(tela);
+   tm.Parent   := tela;
+   tm.Visible  := false;
+   tm.FileName := '..\..\tiro.mp3';
+   tm.Open;
 
    //explosao
    ImgBatida := timage.Create(tela);
    ImgBatida.Parent := tela;
-   ImgBatida.Picture.LoadFromFile('..\..\Explosao.png');
+   ImgBatida.Picture.LoadFromFile('..\..\colisao.png');
    ImgBatida.Height := 200;
    ImgBatida.Width  := 200;
    ImgBatida.Stretch := true;
@@ -142,7 +161,7 @@ begin
 
 
    TCriador := TTimer.Create(Tela);
-   TCriador.Interval := 1000;
+   TCriador.Interval := 2000;
    TCriador.OnTimer  := CriaInimigo;
    TCriador.Enabled  := true;
 
@@ -158,24 +177,43 @@ begin
 
 end;
 
-procedure TJogo.MoveBaixo;
+procedure TJogo.setCanhaoEsquerda;
 begin
-   nave.top  := nave.top  + 4;
+   direcaoCanhao := 0;
 end;
 
-procedure TJogo.MoveCima;
+procedure TJogo.setCanhaoMeio;
 begin
-   nave.top  := nave.top  - 4;
+   direcaoCanhao := 1;
 end;
 
-procedure TJogo.MoveDireita;
+procedure TJogo.setCanhaoDireita;
 begin
-   nave.Left := nave.Left + 4;
+   direcaoCanhao := 2;
 end;
 
-procedure TJogo.MoveEsquerda;
+procedure TJogo.atirar;
 begin
-  nave.Left := nave.Left - 4;
+     tm.Rewind;
+     tm.Play;
+     nave.Visible := true;
+     if direcaoCanhao = 0 then
+     begin
+         Nave.Top := 230;
+         Nave.Left := 50;
+     end
+     else if direcaoCanhao = 1 then
+     begin
+         Nave.Top := 210;
+         Nave.Left := 290;
+     end
+     else
+     begin
+        Nave.Top := 210;
+         Nave.Left := 580;
+     end;
+
+     // TODO: logica do tiro
 end;
 
 procedure TJogo.MoveInimigos(Sender: TObject);
@@ -189,10 +227,10 @@ begin
          begin
             if TPanel(tela.Components[i]).tag =1 then
             begin
-               TPanel(tela.Components[i]).Top := TPanel(tela.Components[i]).Top + 1;
-               if TPanel(tela.Components[i]).Top > tela.Height then
+               TPanel(tela.Components[i]).Left := TPanel(tela.Components[i]).Left + 1;
+               if TPanel(tela.Components[i]).Left > tela.Width then
                begin
-                  TPanel(tela.Components[i]).Top    := 40;
+                  TPanel(tela.Components[i]).Left    := 40;
                   TPanel(tela.Components[i]).Left   := Random(tela.Width - 30);
                end;
 

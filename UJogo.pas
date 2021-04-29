@@ -10,9 +10,13 @@ uses
 type
   TForm3 = class(TForm)
     Panel1: TPanel;
+    Label1: TLabel;
+    Label2: TLabel;
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure atualizarLabelNivel(Sender: TObject);
+    procedure atualizarLabelPontuacao(Sender: TObject);
   private
     { Private declarations }
   public
@@ -39,21 +43,45 @@ procedure TForm3.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
    case key of
-    VK_LEFT  : jogo.MoveEsquerda;
-    VK_RIGHT : jogo.Movedireita;
-    VK_UP    : jogo.MoveCima;
-    VK_DOWN  : jogo.MoveBaixo;
+    VK_LEFT  : jogo.setCanhaoEsquerda;
+    VK_RIGHT : jogo.setCanhaoDireita;
+    VK_UP    : jogo.setCanhaoMeio;
+    VK_DOWN  : jogo.setCanhaoMeio;
+    VK_SPACE : jogo.atirar;
    end;
 
 
 end;
 
 procedure TForm3.FormShow(Sender: TObject);
+var
+  tmover: TTimer;
 begin
    jogo := tjogo.Create;
 
    jogo.inicializar(Panel1);
 
+   // Manter Label Nível atualizada:
+   TMover := TTimer.Create(jogo.tela);
+   TMover.Interval := 500;
+   TMover.OnTimer  := atualizarLabelNivel;
+   TMover.Enabled  := true;
+
+   // Manter Lavel Pontuação atualizada:
+   TMover := TTimer.Create(jogo.tela);
+   TMover.Interval := 100;
+   TMover.OnTimer  := atualizarLabelPontuacao;
+   TMover.Enabled  := true;
+end;
+
+procedure TForm3.atualizarLabelNivel(Sender: TObject);
+begin
+  Label1.Caption := 'Nível ' + IntToStr(jogo.nivel);
+end;
+
+procedure TForm3.atualizarLabelPontuacao(Sender: TObject);
+begin
+  Label2.Caption := 'Pontuação: ' + IntToStr(jogo.pontuacao);
 end;
 
 end.
